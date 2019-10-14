@@ -1,6 +1,9 @@
 #!/bin/sh
 
-TITLE="Net Tester"
+DISPLAY_NOTIFICATION(){
+~/Library/Application\ Support/NetTester/terminal-notifier.app/Contents/MacOS/terminal-notifier -title "Net Tester"  -message "${MESSAGE}" 
+}
+
 old_net=0
 net=0
 
@@ -17,8 +20,7 @@ while [[ $varn = 0 ]]; do
     else
         MESSAGE="ONLINE"
     fi
-    COMMAND="display notification \"${MESSAGE}\" with title \"${TITLE}\""
-    osascript -e "${COMMAND}"
+    DISPLAY_NOTIFICATION
    
 fi
 old_net=$net; sleep 2

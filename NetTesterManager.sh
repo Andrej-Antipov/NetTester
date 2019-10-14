@@ -28,66 +28,7 @@ cat  ~/.bash_history | sed -n '/NetTesterManager/!p' >> ~/new_hist.txt; rm ~/.ba
      osascript -e 'tell application "Terminal" to close first window' & exit
 }
 
-GET_AUTH(){
 
-PASSWORD=""
-if [[ -f ~/.auth/auth.plist ]]; then
-      login=`cat ~/.auth/auth.plist | grep -Eo "LoginPassword"  | tr -d '\n'`
-    if [[ $login = "LoginPassword" ]]; then
-PASSWORD=`cat ~/.auth/auth.plist | grep -A 1 "LoginPassword" | grep string | sed -e 's/.*>\(.*\)<.*/\1/' | tr -d '\n'`
-    fi 
-fi 
-
-}
-
-
-
-SET_USER_PASSWORD(){
-
-if [[ ! -d ~/.auth ]]; then mkdir ~/.auth; fi
-
-if [[ ! -f ~/.auth/auth.plist ]]; then
-            echo '<?xml version="1.0" encoding="UTF-8"?>' >> ~/.auth/auth.plist
-            echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> ~/.auth/auth.plist
-            echo '<plist version="1.0">' >> ~/.auth/auth.plist
-            echo '<dict>' >> ~/.auth/auth.plist
-            echo '</dict>' >> ~/.auth/auth.plist
-            echo '</plist>' >> ~/.auth/auth.plist
-fi
-
-plutil -replace Locale -string $loc ~/.auth/auth.plist
-
-login=`cat ~/.auth/auth.plist | grep -Eo "LoginPassword"  | tr -d '\n'`
-    if [[ ! $login = "LoginPassword" ]]; then
-                var2=3
-                while [[ ! $var2 = 0 ]] 
-                do
-                CLEAR_PLACE
-                printf "\033[?25h"
-                printf '\n\n  Введите ваш пароль для  постоянного хранения: '
-                read -s mypassword
-                printf "\033[?25l"
-                if [[ $mypassword = "" ]]; then mypassword="?"; fi
-                if echo $mypassword | sudo -Sk printf '' 2>/dev/null; then
-                var2=0
-                plutil -replace LoginPassword -string $mypassword ~/.auth/auth.plist
-
-                printf '\n\n  Пароль \e[32m'$mypassword'\e[0m сохранён.                \n'
-                PASSWORD="${mypassword}"
-                read -n 1 -s -t 2
-                else
-                printf '\n\n  Не верный пароль \e[33m'$mypassword'\e[0m не сохранён.      \n'
-                let "var2--"
-                read -n 1 -s -t 2
-                 
-            fi 
-                 done
-                 CLEAR_PLACE
-                
-        fi
-    
-
-}
 
 CLEAR_PLACE(){
 
@@ -121,7 +62,7 @@ case ${layout_name} in
  esac
 
 if [[ $xkbs = 2 ]]; then 
-cd $(dirname $0)
+cd "$(dirname "$0")"
     if [[ -f "./tools/xkbswitch" ]]; then 
 declare -a layouts_names
 layouts=`defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleInputSourceHistory | egrep -w 'KeyboardLayout Name' | sed -E 's/.+ = "?([^"]+)"?;/\1/' | tr  '\n' ';'`
@@ -144,8 +85,11 @@ done
 
 if [[ ! $keyboard = "0" ]]; then ./tools/xkbswitch -se $keyboard; fi
    else
-        
+if [[ $loc = "ru" ]]; then        
 printf '\r               \e[1;33;5m!!!  Смените раскладку на латиницу   !!!\e[0m               '
+else
+printf '\r               \e[1;33;5m!!!   Change the layout to Latin     !!!\e[0m               '
+fi
 read -t 2 -s 
 printf '\r                                        \r'
        
@@ -155,16 +99,19 @@ fi
 
 GET_INPUT(){
 unset inputs
-while [[ ! ${inputs} =~ ^[0-9qQaAbBcC]+$ ]]; do
-printf "\033[?25l"             
+while [[ ! ${inputs} =~ ^[0-4qQa]+$ ]]; do
+printf "\033[?25l"
+if [[ $loc = "ru" ]]; then             
 printf '  Введите символ от \e[1;33m1\e[0m до \e[1;36m4\e[0m, (или \e[1;35mQ\e[0m - выход ):   ' ; printf '                             '
-			
+else
+printf '  Enter a number from \e[1;33m1\e[0m to \e[1;36m4\e[0m, (or \e[1;35mQ\e[0m - exit ):  ' ; printf '                            '
+fi			
 printf "%"80"s"'\n'"%"80"s"'\n'"%"80"s"'\n'"%"80"s"
 printf "\033[4A"
 printf "\r\033[46C"
 printf "\033[?25h"
-read -n 1 inputs 
-if [[ ${inputs} = "" ]]; then printf "\033[1A"; fi
+SET_INPUT
+read -rsn1 -t1 inputs 
 printf "\r"
 done
 printf "\033[?25l"
@@ -221,41 +168,27 @@ do
 printf '\e[3J' && printf "\033[0;0H" 
 printf "\033[?25l"
 SHOW_MENU
-SET_INPUT
+#SET_INPUT
 GET_INPUT
 
 if [[ $inputs = 1 ]]; then
-            #GET_AUTH
-            #SET_USER_PASSWORD
-    #if [[ $PASSWORD = "" ]]; then printf '\n\n  \e[1;31mТри неверных ввода пароля ! \e[0m\n'; sleep 2
-#            else
-            if [[ ! -d ~/.auth ]]; then mkdir ~/.auth; fi
-
-            if [[ ! -f ~/.auth/auth.plist ]]; then
-            echo '<?xml version="1.0" encoding="UTF-8"?>' >> ~/.auth/auth.plist
-            echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> ~/.auth/auth.plist
-            echo '<plist version="1.0">' >> ~/.auth/auth.plist
-            echo '<dict>' >> ~/.auth/auth.plist
-            echo '</dict>' >> ~/.auth/auth.plist
-            echo '</plist>' >> ~/.auth/auth.plist
-            fi
-
-            plutil -replace Locale -string $loc ~/.auth/auth.plist
+          
             CLEAR_PLACE
             CHECK_NETTESTER
             if [[ ! $rs_lan = "остановлен" ]] || [[ ! $rs_lan = "работает" ]]; then
-            if [[ -f tools/NetTester.plist ]] && [[ -f tools/NetTester.sh ]]; then
-                if [[ ! -f ~/Library/LaunchAgents/NetTester.plist ]]; then cp -a tools/NetTester.plist ~/Library/LaunchAgents; fi
+            if [[ -f tools/NetTester.plist ]] && [[ -f tools/NetTester.sh ]] && [[ -d tools/terminal-notifier.app ]]; then
+                if [[ ! -f ~/Library/LaunchAgents/NetTester.plist ]]; then cp -a tools/NetTester.plist ~/Library/LaunchAgents; fi                
                 plutil -remove ProgramArguments.0 ~/Library/LaunchAgents/NetTester.plist
                 plutil -insert ProgramArguments.0 -string "/Users/$(whoami)/.NetTester.sh" ~/Library/LaunchAgents/NetTester.plist
                 if [[ ! -f ~/.NetTester.sh ]]; then cp -a tools/NetTester.sh ~/.NetTester.sh; chmod u+x ~/.NetTester.sh; fi
                 if [[ ! $rs_lan = "работает" ]]; then launchctl load -w ~/Library/LaunchAgents/NetTester.plist; fi
+                if [[ ! -d ~/Library/Application\ Support/NetTester ]]; then mkdir  ~/Library/Application\ Support/NetTester; fi
+                cp -a tools/terminal-notifier.app ~/Library/Application\ Support/NetTester
         else
         printf '\n   Не найдены файлы для установки. Поместите их в папку tools с установщиком\n'
         printf '\n'
         
         fi
-#    fi
 fi
 
 read -n 1 -t 1
@@ -291,6 +224,7 @@ if [[ $inputs = 4 ]]; then
     if [[ $(launchctl list | grep "NetTester.job" | cut -f3 | grep -x "NetTester.job") ]]; then launchctl unload -w ~/Library/LaunchAgents/NetTester.plist; fi
     if [[ -f ~/Library/LaunchAgents/NetTester.plist ]]; then rm ~/Library/LaunchAgents/NetTester.plist; fi
     if [[ -f ~/.NetTester.sh ]]; then rm ~/.NetTester.sh; fi
+    rm -Rf  ~/Library/Application\ Support/NetTester
     read -n 1 -t 1
     CLEAR_PLACE
 fi
